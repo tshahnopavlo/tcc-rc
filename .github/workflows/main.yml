@@ -35,3 +35,5 @@ jobs:
           tag: v${{ github.sha }}
           name: Release v${{ github.sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
+
+          
