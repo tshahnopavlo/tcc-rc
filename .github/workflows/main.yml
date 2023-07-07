@@ -31,9 +31,9 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: "hello-*"
-          # Use the current date with seconds as the tag name
-          tag: ${{ format('release-{0:yyyy-MM-dd-HH-mm-ss}', github.event.head_commit.timestamp) }}
-          name: Release ${{ format('release-{0:yyyy-MM-dd-HH-mm-ss}', github.event.head_commit.timestamp) }}
+          # Convert the string to a date and use the current date with seconds as the tag name
+          tag: ${{ format('release-{0:yyyy-MM-dd-HH-mm-ss}', fromJson(github.event.head_commit.timestamp)) }}
+          name: Release ${{ format('release-{0:yyyy-MM-dd-HH-mm-ss}', fromJson(github.event.head_commit.timestamp)) }}
           token: ${{ secrets.GITHUB_TOKEN }}
           # Skip the step if the tag already exists
           if-no-files-found: skip
