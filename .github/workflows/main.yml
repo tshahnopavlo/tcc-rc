@@ -43,8 +43,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           # Skip the step if the tag already exists
           if-no-files-found: skip
-          # Use the .zip file as the asset_path
-          asset_path: hello-${{ matrix.os }}.zip
-          # Use the .zip file as the asset_name
+          # Use the zip file inside the artifact directory as the asset_path
+          asset_path: hello-${{ matrix.os }}.zip/hello-${{ matrix.os }}.zip
+          # Use the zip file as the asset_name
           asset_name: hello-${{ matrix.os }}.zip
+          # Use application/zip as the asset_content_type
           asset_content_type: application/zip
+      
