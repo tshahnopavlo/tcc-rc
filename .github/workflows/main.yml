@@ -5,7 +5,6 @@ on: [push]
 
 jobs:
   build:
-    permissions: write-all
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -19,11 +18,11 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: hello-${{ matrix.os }}
+          # Add a .zip extension to the artifact name
+          name: hello-${{ matrix.os }}.zip
           path: hello
 
   release:
-    permissions: write-all
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -32,8 +31,14 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: "hello-*"
-          tag: v${{ github.sha }}
-          name: Release v${{ github.sha }}
+          # Use the current date with seconds as the tag name
+          tag: ${{ format('release-{0:yyyy-MM-dd-HH-mm-ss}', github.event.head_commit.timestamp) }}
+          name: Release ${{ format('release-{0:yyyy-MM-dd-HH-mm-ss}', github.event.head_commit.timestamp) }}
           token: ${{ secrets.GITHUB_TOKEN }}
-
-          
+          # Skip the step if the tag already exists
+          if-no-files-found: skip
+          # Use the .zip file as the asset_path
+          asset_path: hello-${{ matrix.os }}.zip
+          # Use the .zip file as the asset_name
+          asset_name: hello-${{ matrix.os }}.zip
+          asset_content_type: application/zip
