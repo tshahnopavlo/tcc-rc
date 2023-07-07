@@ -32,6 +32,6 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: "hello-*"
-          tag: ${{ github.sha }}
-          name: Release ${{ github.sha }}
+          tag: v${{ github.sha }}
+          name: Release v${{ github.sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
