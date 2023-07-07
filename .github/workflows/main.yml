@@ -27,13 +27,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v2
+      # Add a step to get the current date in UTC using the Linux command date and save it as an output
+      - name: Get current date in UTC
+        id: date
+        run: echo "::set-output name=date::$(date -u +%Y-%m-%d-%H-%M-%S)"
       - name: Create tag and release
         uses: ncipollo/release-action@v1
         with:
           artifacts: "hello-*"
-          # Convert the string to a date and use the current date with seconds as the tag name
-          tag: ${{ format('release-{0:yyyy-MM-dd-HH-mm-ss}', fromJson(github.event.head_commit.timestamp)) }}
-          name: Release ${{ format('release-{0:yyyy-MM-dd-HH-mm-ss}', fromJson(github.event.head_commit.timestamp)) }}
+          # Use the output of the previous step as the tag name and release name
+          tag: ${{ format('release-{0}', steps.date.outputs.date) }}
+          name: Release ${{ format('release-{0}', steps.date.outputs.date) }}
           token: ${{ secrets.GITHUB_TOKEN }}
           # Skip the step if the tag already exists
           if-no-files-found: skip
