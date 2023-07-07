@@ -1,0 +1,35 @@
+# .github/workflows/build.yml
+name: Build and Release
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [linux, macos, windows]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install TCC
+        run: sudo apt-get install tcc
+      - name: Build with TCC
+        run: make CC=tcc
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: hello-${{ matrix.os }}
+          path: hello
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v2
+      - name: Create tag and release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "hello-*"
+          tag: ${{ github.sha }}
+          name: Release ${{ github.sha }}
+          token: ${{ secrets.GITHUB_TOKEN }}
