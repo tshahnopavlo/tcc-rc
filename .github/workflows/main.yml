@@ -1,5 +1,5 @@
 # .github/workflows/build.yml
-name: Build
+name: Build and release
 
 on: [push]
 
@@ -12,45 +12,69 @@ jobs:
         os: [linux, macos, windows]
     steps:
       - uses: actions/checkout@v2
-      - name: Install TCC
+      - name: Install tcc for Linux
+        if: matrix.os == 'linux'
         run: sudo apt-get install tcc
-      - name: Build with TCC
-        run: make CC=tcc
-      - name: Zip binaries
-        run: zip ${{ matrix.os }}.zip hello # Use ${{ matrix.os }} instead of ${matrix.os}
-      - name: Upload binaries as artifacts
+      - name: Install tcc for macOS
+        if: matrix.os == 'macos'
+        run: brew install tcc
+      - name: Install tcc for Windows
+        if: matrix.os == 'windows'
+        run: |
+          sudo apt-get install mingw-w64
+          wget https://download.savannah.gnu.org/releases/tinycc/tcc-0.9.27-win32-bin.zip
+          unzip tcc-0.9.27-win32-bin.zip -d tcc
+          echo "TCC = ./tcc/tcc.exe" >> Makefile
+      - name: Build executable
+        run: make
+      - name: Zip executable
+        run: zip hello-${{ matrix.os }}.zip hello${{ matrix.os == 'windows' && '.exe' || '' }}
+      - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.os }}
-          path: ${{ matrix.os }}.zip
+          name: hello-${{ matrix.os }}.zip
+          path: hello-${{ matrix.os }}.zip
 
   release:
     needs: build
-    runs-on: ubuntu-latest
     permissions: write-all
+    runs-on: ubuntu-latest
     steps:
-      - name: Download all artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v2
-        with:
-          path: artifacts/
       - name: Create tag and release
-        uses: actions/create-release@v1.1.4
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: V${{ github.sha }} # Use the commit sha as the tag name
-          release_name: Release ${{ github.sha }}
-          body: |
-            Release generated from workflow.
+          tag_name: ${{ github.ref_name }}-${{ github.run_number }}
+          release_name: Release ${{ github.ref_name }}-${{ github.run_number }}
           draft: false
           prerelease: false
-      - name: Upload binaries as release assets
+      - name: Upload release assets
         uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ github.event.release.upload_url }} # Use the upload URL from the release event context variable
-          asset_path: artifacts/${{ matrix.os }}.zip # Use ${{ matrix.os }} instead of ${matrix.os}
-          asset_name: ${{ matrix.os }}.zip # Use ${{ matrix.os }} instead of ${matrix.os}
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./hello-linux.zip
+          asset_name: hello-linux.zip
           asset_content_type: application/zip
-
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./hello-macos.zip
+          asset_name: hello-macos.zip
+          asset_content_type: application/zip      
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./hello-windows.zip
+          asset_name: hello-windows.zip
+          asset_content_type: application/zip      
