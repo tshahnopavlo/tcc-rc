@@ -38,8 +38,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}-${{ github.run_number }}
-          release_name: Release ${{ github.ref }}-${{ github.run_number }}
+          tag_name: v${{ github.sha }} # Use the commit sha as the tag name
+          release_name: Release ${{ github.sha }}
           body: |
             Release generated from workflow.
           draft: false
