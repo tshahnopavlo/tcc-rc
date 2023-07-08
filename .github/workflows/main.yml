@@ -5,6 +5,7 @@ on: [push]
 
 jobs:
   build:
+    permissions: write-all
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -24,6 +25,7 @@ jobs:
           path: ${{ matrix.os }}.zip
 
   release:
+    permissions: write-all
     needs: build
     runs-on: ubuntu-latest
     steps:
