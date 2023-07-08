@@ -1,11 +1,10 @@
 # .github/workflows/build.yml
-name: Build and Release
+name: Build
 
 on: [push]
 
 jobs:
   build:
-    permissions: write-all
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -16,37 +15,40 @@ jobs:
         run: sudo apt-get install tcc
       - name: Build with TCC
         run: make CC=tcc
-      - name: Upload artifact
+      - name: Zip binaries
+        run: zip ${matrix.os}.zip hello
+      - name: Upload binaries as artifacts
         uses: actions/upload-artifact@v2
         with:
-          # Add a .zip extension to the artifact name
-          name: hello-${{ matrix.os }}.zip
-          path: hello
+          name: ${matrix.os}
+          path: ${matrix.os}.zip
 
   release:
-    permissions: write-all
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v2
-      # Add a step to get the current date in UTC using the Linux command date and save it as an output
-      - name: Get current date in UTC
-        id: date
-        run: echo "::set-output name=date::$(date -u +%Y-%m-%d-%H-%M-%S)"
-      - name: Create tag and release
-        uses: ncipollo/release-action@v1
+      - name: Download all artifacts
+        uses: actions/download-artifact@v2
         with:
-          artifacts: "hello-*"
-          # Use the output of the previous step as the tag name and release name
-          tag: ${{ format('release-{0}', steps.date.outputs.date) }}
-          name: Release ${{ format('release-{0}', steps.date.outputs.date) }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # Skip the step if the tag already exists
-          if-no-files-found: skip
-          # Use the zip file inside the artifact directory as the asset_path
-          asset_path: hello-${{ matrix.os }}.zip/hello-${{ matrix.os }}.zip
-          # Use the zip file as the asset_name
-          asset_name: hello-${{ matrix.os }}.zip
-          # Use application/zip as the asset_content_type
+          path: artifacts/
+      - name: Create tag and release
+        uses: actions/create-release@v1.1.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}-${{ github.run_number }}
+          release_name: Release ${{ github.ref }}-${{ github.run_number }}
+          body: |
+            Release generated from workflow.
+          draft: false
+          prerelease: false
+      - name: Upload binaries as release assets
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/${{ matrix.os }}.zip
+          asset_name: ${{ matrix.os }}.zip
           asset_content_type: application/zip
-      
+
