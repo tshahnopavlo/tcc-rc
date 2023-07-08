@@ -16,12 +16,12 @@ jobs:
       - name: Build with TCC
         run: make CC=tcc
       - name: Zip binaries
-        run: zip ${matrix.os}.zip hello
+        run: zip ${{ matrix.os }}.zip hello # Use ${{ matrix.os }} instead of ${matrix.os}
       - name: Upload binaries as artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: ${matrix.os}
-          path: ${matrix.os}.zip
+          name: ${{ matrix.os }}
+          path: ${{ matrix.os }}.zip
 
   release:
     needs: build
@@ -48,7 +48,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/${{ matrix.os }}.zip
-          asset_name: ${{ matrix.os }}.zip
+          asset_path: artifacts/${{ matrix.os }}.zip # Use ${{ matrix.os }} instead of ${matrix.os}
+          asset_name: ${{ matrix.os }}.zip # Use ${{ matrix.os }} instead of ${matrix.os}
           asset_content_type: application/zip
 
