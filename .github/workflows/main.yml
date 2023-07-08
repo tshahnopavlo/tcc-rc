@@ -5,8 +5,8 @@ on: [push]
 
 jobs:
   build:
-    permissions: write-all
     runs-on: ubuntu-latest
+    permissions: write-all
     strategy:
       matrix:
         os: [linux, macos, windows]
@@ -25,9 +25,9 @@ jobs:
           path: ${{ matrix.os }}.zip
 
   release:
-    permissions: write-all
     needs: build
     runs-on: ubuntu-latest
+    permissions: write-all
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v2
@@ -38,7 +38,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ github.sha }} # Use the commit sha as the tag name
+          tag_name: ${{ github.sha }} # Use the commit sha as the tag name
           release_name: Release ${{ github.sha }}
           body: |
             Release generated from workflow.
@@ -49,7 +49,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ github.event.release.upload_url }} # Use the upload URL from the release event context variable
           asset_path: artifacts/${{ matrix.os }}.zip # Use ${{ matrix.os }} instead of ${matrix.os}
           asset_name: ${{ matrix.os }}.zip # Use ${{ matrix.os }} instead of ${matrix.os}
           asset_content_type: application/zip
